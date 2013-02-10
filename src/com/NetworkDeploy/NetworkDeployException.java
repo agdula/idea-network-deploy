@@ -17,8 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package com.NetworkDeploy;
 
-public interface AbstractCopy {
-    boolean isValidDestination(String destination);
-
-    void copy(byte[] source, String destination) throws NetworkDeployException;
+public class NetworkDeployException extends Exception {
+    public NetworkDeployException(String message) {
+        super(message);
+    }
 }

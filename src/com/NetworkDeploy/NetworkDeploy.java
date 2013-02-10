@@ -38,14 +38,16 @@ public class NetworkDeploy extends AnAction {
     public void actionPerformed(AnActionEvent event) {
         try {
             doAction(event);
+        } catch (NetworkDeployException e) {
+            notify(e.getMessage(), NotificationType.ERROR);
         } catch (Exception e) {
-            String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getName();
-            Notifications.Bus.notify(new Notification("NetworkDeploy", "Network Deploy Exception", errorMessage, NotificationType.ERROR));
             e.printStackTrace();
+            String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getName();
+            notify(errorMessage, NotificationType.ERROR);
         }
     }
 
-    private void doAction(AnActionEvent event) throws Exception{
+    private void doAction(AnActionEvent event) throws NetworkDeployException {
         VirtualFile file = event.getData(PlatformDataKeys.VIRTUAL_FILE);
         if (file ==null || file.isDirectory()) return;
 
@@ -66,19 +68,36 @@ public class NetworkDeploy extends AnAction {
                 }
             }
         }
-        Notifications.Bus.notify(new Notification("NetworkDeploy", "Network Deploy", "Destination '"+destination+"' is not valid", NotificationType.WARNING));
+        notify("Destination '"+destination+"' is not valid", NotificationType.ERROR);
     }
 
-    private void copy(final AbstractCopy worker, VirtualFile file, final String destination) throws IOException {
-        final byte[] source = file.contentsToByteArray();
+    private void copy(final AbstractCopy worker, VirtualFile file, final String destination) throws NetworkDeployException {
+        byte[] buffer;
+        try {
+            buffer = file.contentsToByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new NetworkDeployException("Can't get file's content");
+        }
+        final byte[] source = buffer;
 
         new Thread() {
             public void run() {
-                String error = worker.copy(source, destination);
-                if (error==null) Notifications.Bus.notify(new Notification("NetworkDeploy", "Network Deploy", "File is copied successfully", NotificationType.INFORMATION));
-                else Notifications.Bus.notify(new Notification("NetworkDeploy", "Network Deploy", error, NotificationType.ERROR));
+                try {
+                    worker.copy(source, destination);
+                    NetworkDeploy.notify("File is copied successfully", NotificationType.INFORMATION);
+                } catch (NetworkDeployException e) {
+                    NetworkDeploy.notify(e.getMessage(), NotificationType.ERROR);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getName();
+                    NetworkDeploy.notify(errorMessage, NotificationType.ERROR);
+                }
             }
         }.start();
     }
 
+    private static void notify(String message, NotificationType type) {
+        Notifications.Bus.notify(new Notification("NetworkDeploy", "Network Deploy", message, type));
+    }
 }

@@ -18,11 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package com.NetworkDeploy.worker;
 
 import com.NetworkDeploy.AbstractCopy;
+import com.NetworkDeploy.NetworkDeployException;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
 public class LocalCopy implements AbstractCopy {
     private File file;
@@ -39,42 +37,41 @@ public class LocalCopy implements AbstractCopy {
         return file.isAbsolute();
     }
 
-    public String copy(byte[] source, String destination) {
+    public void copy(byte[] source, String destination) throws NetworkDeployException {
         file = new File(destination);
         if (file.exists()) {
             if (file.isFile()) {
                 if (file.canWrite()) {
-                    return copy(source);
-                } else return "Don't have a write access";
-            } else return "'"+destination+"' is not a regular file";
+                    copy(source);
+                    return;
+                } else throw new NetworkDeployException("You don't have write access to '"+destination+"'");
+            } else throw new NetworkDeployException("'"+destination+"' is not a regular file");
         }
 
         try {
             file.createNewFile();
         } catch (IOException e) {
-            return "Can't create file";
+            throw new NetworkDeployException("Can't create file '"+destination+"'");
         }
-        return copy(source);
+        copy(source);
     }
 
-    private String copy(byte[] source) {
-        String error = null;
-
+    private void copy(byte[] source) throws NetworkDeployException {
         OutputStream os = null;
         try {
             os = new FileOutputStream(file);
             os.write(source);
-        } catch (Exception e) {
-            error = e.getMessage();
-            if (error==null) error = e.getClass().getName();
-        } finally {
-            System.out.println("HERE");
-            if (os!=null) try {
+            os.close();
+        } catch (FileNotFoundException e) {
+            throw new NetworkDeployException("FileNotFoundException");
+        } catch (IOException e) {
+            e.printStackTrace();
+            try {
                 os.close();
-            } catch (IOException e) {
+            } catch (IOException exp) {
                 e.printStackTrace();
             }
+            throw new NetworkDeployException("Error occurred while writing to file");
         }
-        return error;
     }
 }
