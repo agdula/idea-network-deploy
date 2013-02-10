@@ -37,7 +37,8 @@ public class NetworkDeploy extends AnAction {
 
     public void actionPerformed(AnActionEvent event) {
         try {
-            Config.prepare();
+            ConfigHelper.prepare();
+            if (Config.isUseDestinationHistory()) DestinationHistory.prepare();
             doAction(event);
         } catch (NetworkDeployException e) {
             notify(e.getMessage(), NotificationType.ERROR);
@@ -52,6 +53,7 @@ public class NetworkDeploy extends AnAction {
         VirtualFile file = event.getData(PlatformDataKeys.VIRTUAL_FILE);
         if (file ==null || file.isDirectory()) return;
 
+        DestinationHistory history = Config.isUseDestinationHistory() ? new DestinationHistory(file) : null;
         Project project = event.getData(PlatformDataKeys.PROJECT);
         String destination = Messages.showInputDialog(project, "Where to save '"+ file.getName()+"'?", "", Messages.getQuestionIcon());
         if (destination==null) return;
@@ -64,7 +66,7 @@ public class NetworkDeploy extends AnAction {
                     assert document != null;
                     FileDocumentManager.getInstance().saveDocument(document);
 
-                    copy(worker, file, destination);
+                    copy(worker, file, destination, history);
                     return;
                 }
             }
@@ -72,7 +74,7 @@ public class NetworkDeploy extends AnAction {
         notify("Destination '"+destination+"' is not valid", NotificationType.ERROR);
     }
 
-    private void copy(final AbstractCopy worker, VirtualFile file, final String destination) throws NetworkDeployException {
+    private void copy(final AbstractCopy worker, VirtualFile file, final String destination, final DestinationHistory history) throws NetworkDeployException {
         byte[] buffer;
         try {
             buffer = file.contentsToByteArray();
@@ -87,6 +89,7 @@ public class NetworkDeploy extends AnAction {
                 try {
                     worker.copy(source, destination);
                     NetworkDeploy.notify("File is copied successfully", NotificationType.INFORMATION);
+                    if (Config.isUseDestinationHistory()) history.save(destination);
                 } catch (NetworkDeployException e) {
                     NetworkDeploy.notify(e.getMessage(), NotificationType.ERROR);
                 } catch (Exception e) {

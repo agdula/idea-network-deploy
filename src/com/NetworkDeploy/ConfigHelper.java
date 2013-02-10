@@ -20,7 +20,7 @@ package com.NetworkDeploy;
 import java.io.*;
 import java.util.Properties;
 
-public abstract class Config {
+public abstract class ConfigHelper {
     public static void prepare() throws NetworkDeployException {
         File userFolder = new File(System.getProperty("user.home"));
         File pluginFolder = new File(userFolder, ".NetworkDeploy");
@@ -30,6 +30,7 @@ public abstract class Config {
         } else {
             if (!pluginFolder.mkdir()) throw new NetworkDeployException("Can't create plugin directory");
         }
+        Config.setPluginFolder(pluginFolder);
 
         File configFile = new File(pluginFolder, "main.properties");
         if (configFile.exists()) {
@@ -77,5 +78,29 @@ public abstract class Config {
             }
             throw new NetworkDeployException("Can't load config");
         }
+
+        parse(prop);
+    }
+
+    private static void parse(Properties prop) throws NetworkDeployException {
+        Config.setUseDestinationHistory(getBoolean(prop, "use_destination_history", false));
+    }
+
+    private static boolean getBoolean(Properties prop, String key, boolean defaultValue) throws NetworkDeployException{
+        String property = prop.getProperty(key);
+        if (property==null) return defaultValue;
+        property = property.trim();
+
+        String yes[] = {"y","yes","1","t","true"};
+        for (String word : yes) {
+            if (property.equalsIgnoreCase(word)) return true;
+        }
+
+        String no[] = {"n","no","0","f","false"};
+        for (String word : no) {
+            if (property.equalsIgnoreCase(word)) return false;
+        }
+
+        throw new NetworkDeployException("Incorrect value for config property " + key);
     }
 }
