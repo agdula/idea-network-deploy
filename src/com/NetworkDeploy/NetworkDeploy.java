@@ -37,6 +37,7 @@ public class NetworkDeploy extends AnAction {
 
     public void actionPerformed(AnActionEvent event) {
         try {
+            Config.prepare();
             doAction(event);
         } catch (NetworkDeployException e) {
             notify(e.getMessage(), NotificationType.ERROR);
