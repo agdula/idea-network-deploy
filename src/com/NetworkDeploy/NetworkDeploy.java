@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package com.NetworkDeploy;
 
+import com.NetworkDeploy.ui.EditChooseDialog;
 import com.NetworkDeploy.worker.LocalCopy;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -27,10 +28,11 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NetworkDeploy extends AnAction {
     private final static AbstractCopy[] workers = {new LocalCopy()};
@@ -55,7 +57,8 @@ public class NetworkDeploy extends AnAction {
 
         DestinationHistory history = Config.isUseDestinationHistory() ? new DestinationHistory(file) : null;
         Project project = event.getData(PlatformDataKeys.PROJECT);
-        String destination = Messages.showInputDialog(project, "Where to save '"+ file.getName()+"'?", "", Messages.getQuestionIcon());
+        List<String> options = history==null ? new ArrayList<String>() : history.getDestinations();
+        String destination = EditChooseDialog.showDialog(project, "Where to save '"+ file.getName()+"'?", options);
         if (destination==null) return;
         destination = destination.trim();
 

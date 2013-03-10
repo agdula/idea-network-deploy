@@ -50,7 +50,6 @@ public class DestinationHistory {
                 while (scanner.hasNext()) {
                     String destination = scanner.next().trim();
                     destinations.add(destination);
-                    System.out.println(destination);
                 }
                 scanner.close();
             } catch (FileNotFoundException e) {
@@ -86,5 +85,9 @@ public class DestinationHistory {
             }
             throw new NetworkDeployException("Can't save history");
         }
+    }
+
+    public List<String> getDestinations() {
+        return destinations;
     }
 }
