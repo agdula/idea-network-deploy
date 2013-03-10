@@ -19,6 +19,7 @@ package com.NetworkDeploy;
 
 import com.NetworkDeploy.ui.EditChooseDialog;
 import com.NetworkDeploy.worker.LocalCopy;
+import com.NetworkDeploy.worker.SftpCopy;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -35,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NetworkDeploy extends AnAction {
-    private final static AbstractCopy[] workers = {new LocalCopy()};
+    private final static AbstractCopy[] workers = {new SftpCopy(), new LocalCopy()}; //todo replace with arrays of classes
 
     public void actionPerformed(AnActionEvent event) {
         try {
