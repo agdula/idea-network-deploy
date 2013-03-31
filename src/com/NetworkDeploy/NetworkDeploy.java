@@ -70,6 +70,7 @@ public class NetworkDeploy extends AnAction {
                     assert document != null;
                     FileDocumentManager.getInstance().saveDocument(document);
 
+                    worker.setProject(project);
                     copy(worker, file, destination, history);
                     return;
                 }

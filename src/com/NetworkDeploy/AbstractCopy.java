@@ -17,8 +17,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package com.NetworkDeploy;
 
-public interface AbstractCopy {
-    boolean isValidDestination(String destination);
+import com.intellij.openapi.project.Project;
 
-    void copy(byte[] source, String destination) throws NetworkDeployException;
+public abstract class AbstractCopy {
+    protected Project project;
+
+    public void setProject(Project project) {
+        this.project = project;
+    }
+
+    public abstract boolean isValidDestination(String destination);
+
+    public abstract void copy(byte[] source, String destination) throws NetworkDeployException;
 }

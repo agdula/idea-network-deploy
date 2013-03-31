@@ -22,7 +22,7 @@ import com.NetworkDeploy.NetworkDeployException;
 
 import java.io.*;
 
-public class LocalCopy implements AbstractCopy {
+public class LocalCopy extends AbstractCopy {
     private File file;
 
     public boolean isValidDestination(String destination) {

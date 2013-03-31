@@ -19,12 +19,13 @@ package com.NetworkDeploy.worker;
 
 import com.NetworkDeploy.AbstractCopy;
 import com.NetworkDeploy.NetworkDeployException;
+import com.NetworkDeploy.ui.SshUserInfo;
 import com.jcraft.jsch.*;
 
 import java.io.File;
 import java.io.OutputStream;
 
-public class SftpCopy implements AbstractCopy {
+public class SftpCopy extends AbstractCopy {
     public static int CONNECT_TIMEOUT = 1000;
 
     private String user;
@@ -54,8 +55,7 @@ public class SftpCopy implements AbstractCopy {
         Session session;
         ChannelSftp sftp;
         try {
-            session = connect(jsch, host, user, null);
-            if (session==null) session = connect(jsch, host, user, getPassword());
+            session = connect(jsch, host, user);
             if (session==null) throw new NetworkDeployException("Wrong password");
 
             Channel channel = session.openChannel("sftp");
@@ -76,10 +76,6 @@ public class SftpCopy implements AbstractCopy {
 
         sftp.exit();
         session.disconnect();
-    }
-
-    private String getPassword() {
-        return "dragon"; //todo ask password
     }
 
     private void prepare() throws NetworkDeployException {
@@ -106,9 +102,10 @@ public class SftpCopy implements AbstractCopy {
         }
     }
 
-    private static Session connect(JSch jsch, String host, String user, String password) throws JSchException {
+    private Session connect(JSch jsch, String host, String user) throws JSchException {
         Session session = jsch.getSession(user, host);
-        if (password!=null) session.setPassword(password);
+        session.setUserInfo(new SshUserInfo(project));
+
         try {
             session.connect(CONNECT_TIMEOUT);
         } catch (JSchException e) {
