@@ -18,7 +18,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package com.NetworkDeploy;
 
 public class NetworkDeployException extends Exception {
+    private String extended;
+
     public NetworkDeployException(String message) {
         super(message);
+    }
+
+    public NetworkDeployException(String message, String extended) {
+        super(message);
+        this.extended = extended;
+    }
+
+    public NetworkDeployException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public NetworkDeployException(Throwable cause) {
+        super(cause);
+    }
+
+    public String getExtended() {
+        return extended;
     }
 }

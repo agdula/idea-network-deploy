@@ -44,7 +44,7 @@ public class NetworkDeploy extends AnAction {
             if (Config.isUseDestinationHistory()) DestinationHistory.prepare();
             doAction(event);
         } catch (NetworkDeployException e) {
-            notify(e.getMessage(), NotificationType.ERROR);
+            notify(e);
         } catch (Exception e) {
             e.printStackTrace();
             String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getName();
@@ -85,7 +85,7 @@ public class NetworkDeploy extends AnAction {
                 }
             }
         }
-        notify("Destination '"+destination+"' is not valid", NotificationType.ERROR);
+        notify("'"+destination+"' is not a valid destination", NotificationType.ERROR);
     }
 
     private void copy(final AbstractCopy worker, VirtualFile file, final String destination, final DestinationHistory history) throws NetworkDeployException {
@@ -105,7 +105,7 @@ public class NetworkDeploy extends AnAction {
                     NetworkDeploy.notify("File is copied successfully", NotificationType.INFORMATION);
                     if (Config.isUseDestinationHistory()) history.save(destination);
                 } catch (NetworkDeployException e) {
-                    NetworkDeploy.notify(e.getMessage(), NotificationType.ERROR);
+                    NetworkDeploy.notify(e);
                 } catch (Exception e) {
                     e.printStackTrace();
                     String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getName();
@@ -115,7 +115,19 @@ public class NetworkDeploy extends AnAction {
         }.start();
     }
 
-    private static void notify(String message, NotificationType type) {
+    public static void notify(String message, NotificationType type) {
         Notifications.Bus.notify(new Notification("NetworkDeploy", "Network Deploy", message, type));
+    }
+
+    public static void notify(String title, String content, NotificationType type) {
+        if (content==null) notify(title, type);
+        else Notifications.Bus.notify(new Notification("NetworkDeploy", title, content, type));
+    }
+
+    public static void notify(NetworkDeployException e) {
+        if (e.getCause()!=null) {
+            e.getCause().printStackTrace();
+            notify(e.getMessage(), e.getCause().getMessage(), NotificationType.ERROR);
+        } else notify(e.getMessage(), e.getExtended(), NotificationType.ERROR);
     }
 }

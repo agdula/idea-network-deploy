@@ -23,6 +23,7 @@ import com.NetworkDeploy.ui.SshUserInfo;
 import com.jcraft.jsch.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 
 public class SftpCopy extends AbstractCopy {
@@ -58,30 +59,36 @@ public class SftpCopy extends AbstractCopy {
         Session session;
         ChannelSftp sftp;
         try {
-            session = connect(jsch, host, user);
-            if (session==null) throw new NetworkDeployException("Wrong password");
+            session = jsch.getSession(user, host);
+            session.setUserInfo(new SshUserInfo(project));
+            session.connect(CONNECT_TIMEOUT);
 
             Channel channel = session.openChannel("sftp");
             channel.connect(CONNECT_TIMEOUT);
             sftp = (ChannelSftp) channel;
         } catch (JSchException e) {
             e.printStackTrace();
-            throw new NetworkDeployException("Can't open sftp session");
+            throw new NetworkDeployException("Can't open sftp session", e);
         }
 
+        OutputStream os;
         try {
-            OutputStream os;
             try {
                 os = sftp.put(path);
             } catch (SftpException e) {
                 if (e.getMessage().endsWith("is a directory")) {
-                    os = sftp.put(path + "/" + sourceFilename);
+                    path = path + "/" + sourceFilename;
+                    os = sftp.put(path);
                 } else throw e;
             }
+        } catch (SftpException e) {
+            throw new NetworkDeployException("Can't open '" + path + "'", e);
+        }
+
+        try {
             os.write(source);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new NetworkDeployException("Can't save file: " + e.getMessage());
+        } catch (IOException e) {
+            throw new NetworkDeployException("Error occurred while writing to file", e);
         }
 
         sftp.exit();
@@ -100,31 +107,13 @@ public class SftpCopy extends AbstractCopy {
         try {
             jsch.addIdentity(identityFile.getAbsolutePath());
         } catch (JSchException e) {
-            e.printStackTrace();
-            throw new NetworkDeployException("Can't add private key");
+            throw new NetworkDeployException("Can't add private key", e);
         }
 
         try {
             jsch.setKnownHosts(knownHostsFile.getAbsolutePath());
         } catch (JSchException e) {
-            e.printStackTrace();
-            throw new NetworkDeployException("Can't add known hosts");
+            throw new NetworkDeployException("Can't add known hosts file", e);
         }
-    }
-
-    private Session connect(JSch jsch, String host, String user) throws JSchException {
-        Session session = jsch.getSession(user, host);
-        session.setUserInfo(new SshUserInfo(project));
-
-        try {
-            session.connect(CONNECT_TIMEOUT);
-        } catch (JSchException e) {
-            if (e.getMessage().equals("Auth fail")) {
-                session.disconnect();
-                return null;
-            }
-            throw e;
-        }
-        return session;
     }
 }

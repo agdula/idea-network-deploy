@@ -29,6 +29,7 @@ public class LocalCopy extends AbstractCopy {
         File dest = new File(destination);
 
         try {
+            //noinspection ResultOfMethodCallIgnored
             dest.getCanonicalPath();
         } catch (IOException e) {
             return false;
@@ -46,14 +47,15 @@ public class LocalCopy extends AbstractCopy {
                 if (file.canWrite()) {
                     doCopy(source);
                     return;
-                } else throw new NetworkDeployException("You don't have write access to '"+file.getAbsolutePath()+"'");
+                } else throw new NetworkDeployException("Can't open '"+file.getAbsolutePath()+"'", "Permission denied");
             } else throw new NetworkDeployException("'"+file.getAbsolutePath()+"' is not a regular file");
         }
 
         try {
+            //noinspection ResultOfMethodCallIgnored
             file.createNewFile();
         } catch (IOException e) {
-            throw new NetworkDeployException("Can't create file '"+file.getAbsolutePath()+"'");
+            throw new NetworkDeployException("Can't create '"+file.getAbsolutePath()+"'", e);
         }
         doCopy(source);
     }
@@ -65,7 +67,7 @@ public class LocalCopy extends AbstractCopy {
             os.write(source);
             os.close();
         } catch (FileNotFoundException e) {
-            throw new NetworkDeployException("FileNotFoundException");
+            throw new RuntimeException(e);
         } catch (IOException e) {
             e.printStackTrace();
             try {
@@ -73,7 +75,7 @@ public class LocalCopy extends AbstractCopy {
             } catch (IOException exp) {
                 e.printStackTrace();
             }
-            throw new NetworkDeployException("Error occurred while writing to file");
+            throw new NetworkDeployException("Error occurred while writing to file", e);
         }
     }
 }
