@@ -20,15 +20,15 @@ package com.NetworkDeploy;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class DestinationHistory {
     private static File historyFolder;
     private File historyFile;
+    private VirtualFile virtualFile;
 
     private List<String> destinations;
+    private static Map<VirtualFile, String> lastChoices = new HashMap<VirtualFile, String>();
 
     public static void prepare() throws NetworkDeployException{
         historyFolder = new File(Config.getPluginFolder(), "history");
@@ -41,7 +41,9 @@ public class DestinationHistory {
     }
 
     public DestinationHistory(VirtualFile virtualFile) throws NetworkDeployException {
+        this.virtualFile = virtualFile;
         destinations = new ArrayList<String>();
+        if (!Config.isUseDestinationHistory()) return;
 
         historyFile = new File(historyFolder, virtualFile.getName());
         if (historyFile.exists()) {
@@ -53,21 +55,19 @@ public class DestinationHistory {
                 }
                 scanner.close();
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
-                throw new NetworkDeployException("FileNotFoundException");
+                throw new RuntimeException(e);
             }
         }
     }
 
-    public void save(String newDestination) throws NetworkDeployException {
-        List<String> updatedList = new ArrayList<String>();
-        updatedList.add(newDestination);
-        destinations.remove(newDestination);
-        updatedList.addAll(destinations);
-        destinations = updatedList;
+    public void save() throws NetworkDeployException {
+        if (destinations.indexOf(lastChoices.get(virtualFile))==0) return;
+        destinations = newList(destinations, lastChoices.get(virtualFile));
+        if (!Config.isUseDestinationHistory()) return;
 
         OutputStream os = null;
         try {
+            //noinspection ResultOfMethodCallIgnored
             historyFile.createNewFile();
             os = new FileOutputStream(historyFile);
             for (String next : destinations) {
@@ -88,6 +88,18 @@ public class DestinationHistory {
     }
 
     public List<String> getDestinations() {
-        return destinations;
+        return newList(destinations, lastChoices.get(virtualFile));
+    }
+
+    public void addUserChoice(String choice) {
+        lastChoices.put(virtualFile, choice);
+    }
+
+    private static List<String> newList(List<String> oldList, String newItem) {
+        List<String> list = new ArrayList<String>(oldList);
+        if (newItem==null) return list;
+        list.remove(newItem);
+        list.add(0, newItem);
+        return list;
     }
 }

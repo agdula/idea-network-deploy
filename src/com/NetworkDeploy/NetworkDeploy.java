@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class NetworkDeploy extends AnAction {
@@ -56,12 +55,13 @@ public class NetworkDeploy extends AnAction {
         VirtualFile file = event.getData(PlatformDataKeys.VIRTUAL_FILE);
         if (file ==null || file.isDirectory()) return;
 
-        DestinationHistory history = Config.isUseDestinationHistory() ? new DestinationHistory(file) : null;
+        DestinationHistory history = new DestinationHistory(file);
         Project project = event.getData(PlatformDataKeys.PROJECT);
-        List<String> options = history==null ? new ArrayList<String>() : history.getDestinations();
+        List<String> options = history.getDestinations();
         String destination = EditChooseDialog.showDialog(project, "Where to save '"+ file.getName()+"'?", options);
         if (destination==null) return;
         destination = destination.trim();
+        history.addUserChoice(destination);
 
         if (destination.length()!=0) {
             for (Class workerClass : workers) {
@@ -80,7 +80,7 @@ public class NetworkDeploy extends AnAction {
                     FileDocumentManager.getInstance().saveDocument(document);
 
                     worker.setProject(project);
-                    copy(worker, file, destination, history);
+                    copy(worker, file, history);
                     return;
                 }
             }
@@ -88,7 +88,7 @@ public class NetworkDeploy extends AnAction {
         notify("'"+destination+"' is not a valid destination", NotificationType.ERROR);
     }
 
-    private void copy(final AbstractCopy worker, VirtualFile file, final String destination, final DestinationHistory history) throws NetworkDeployException {
+    private void copy(final AbstractCopy worker, VirtualFile file, final DestinationHistory history) throws NetworkDeployException {
         byte[] buffer;
         try {
             buffer = file.contentsToByteArray();
@@ -103,7 +103,7 @@ public class NetworkDeploy extends AnAction {
                 try {
                     worker.copy(source);
                     NetworkDeploy.notify("File is copied successfully", NotificationType.INFORMATION);
-                    if (Config.isUseDestinationHistory()) history.save(destination);
+                    if (Config.isUseDestinationHistory()) history.save();
                 } catch (NetworkDeployException e) {
                     NetworkDeploy.notify(e);
                 } catch (Exception e) {
