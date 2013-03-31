@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NetworkDeploy extends AnAction {
-    private final static AbstractCopy[] workers = {new SftpCopy(), new LocalCopy()}; //todo replace with arrays of classes
+    private final static Class[] workers = {SftpCopy.class, LocalCopy.class};
 
     public void actionPerformed(AnActionEvent event) {
         try {
@@ -64,8 +64,17 @@ public class NetworkDeploy extends AnAction {
         destination = destination.trim();
 
         if (destination.length()!=0) {
-            for (AbstractCopy worker : workers) {
-                if (worker.isValidDestination(destination)) {
+            for (Class workerClass : workers) {
+                AbstractCopy worker;
+                try {
+                    worker = (AbstractCopy) workerClass.newInstance();
+                } catch (InstantiationException e) {
+                    throw new RuntimeException(e);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+
+                if (worker.setDestination(destination, file.getName())) {
                     Document document = FileDocumentManager.getInstance().getDocument(file);
                     assert document != null;
                     FileDocumentManager.getInstance().saveDocument(document);
@@ -92,7 +101,7 @@ public class NetworkDeploy extends AnAction {
         new Thread() {
             public void run() {
                 try {
-                    worker.copy(source, destination);
+                    worker.copy(source);
                     NetworkDeploy.notify("File is copied successfully", NotificationType.INFORMATION);
                     if (Config.isUseDestinationHistory()) history.save(destination);
                 } catch (NetworkDeployException e) {

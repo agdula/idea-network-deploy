@@ -26,7 +26,7 @@ public abstract class AbstractCopy {
         this.project = project;
     }
 
-    public abstract boolean isValidDestination(String destination);
+    public abstract boolean setDestination(String destination, String sourceFilename);
 
-    public abstract void copy(byte[] source, String destination) throws NetworkDeployException;
+    public abstract void copy(byte[] source) throws NetworkDeployException;
 }

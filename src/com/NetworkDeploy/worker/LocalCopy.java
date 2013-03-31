@@ -25,38 +25,40 @@ import java.io.*;
 public class LocalCopy extends AbstractCopy {
     private File file;
 
-    public boolean isValidDestination(String destination) {
-        File file = new File(destination);
+    public boolean setDestination(String destination, String sourceFilename) {
+        File dest = new File(destination);
 
         try {
-            file.getCanonicalPath();
+            dest.getCanonicalPath();
         } catch (IOException e) {
             return false;
         }
 
-        return file.isAbsolute();
+        if (!dest.isAbsolute()) return false;
+
+        file = dest.isDirectory() ? new File(dest, sourceFilename) : dest;
+        return true;
     }
 
-    public void copy(byte[] source, String destination) throws NetworkDeployException {
-        file = new File(destination);
+    public void copy(byte[] source) throws NetworkDeployException {
         if (file.exists()) {
             if (file.isFile()) {
                 if (file.canWrite()) {
-                    copy(source);
+                    doCopy(source);
                     return;
-                } else throw new NetworkDeployException("You don't have write access to '"+destination+"'");
-            } else throw new NetworkDeployException("'"+destination+"' is not a regular file");
+                } else throw new NetworkDeployException("You don't have write access to '"+file.getAbsolutePath()+"'");
+            } else throw new NetworkDeployException("'"+file.getAbsolutePath()+"' is not a regular file");
         }
 
         try {
             file.createNewFile();
         } catch (IOException e) {
-            throw new NetworkDeployException("Can't create file '"+destination+"'");
+            throw new NetworkDeployException("Can't create file '"+file.getAbsolutePath()+"'");
         }
-        copy(source);
+        doCopy(source);
     }
 
-    private void copy(byte[] source) throws NetworkDeployException {
+    private void doCopy(byte[] source) throws NetworkDeployException {
         OutputStream os = null;
         try {
             os = new FileOutputStream(file);

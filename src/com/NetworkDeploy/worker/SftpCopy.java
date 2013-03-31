@@ -31,10 +31,13 @@ public class SftpCopy extends AbstractCopy {
     private String user;
     private String host;
     private String path;
+    private String sourceFilename;
 
     private JSch jsch;
 
-    public boolean isValidDestination(String destination) {
+    public boolean setDestination(String destination, String sourceFilename) {
+        this.sourceFilename = sourceFilename;
+
         int index = destination.indexOf(':');
         if (index<0) return false;
         path = destination.substring(index+1);
@@ -44,12 +47,12 @@ public class SftpCopy extends AbstractCopy {
         if (index<0) return false;
         user = rest.substring(0, index);
         host = rest.substring(index+1);
+        if (path.isEmpty() || path.endsWith("/")) path += sourceFilename;
 
         return true;
     }
 
-    public void copy(byte[] source, String destination) throws NetworkDeployException {
-        isValidDestination(destination);
+    public void copy(byte[] source) throws NetworkDeployException {
         prepare();
 
         Session session;
@@ -67,7 +70,14 @@ public class SftpCopy extends AbstractCopy {
         }
 
         try {
-            OutputStream os = sftp.put(path);
+            OutputStream os;
+            try {
+                os = sftp.put(path);
+            } catch (SftpException e) {
+                if (e.getMessage().endsWith("is a directory")) {
+                    os = sftp.put(path + "/" + sourceFilename);
+                } else throw e;
+            }
             os.write(source);
         } catch (Exception e) {
             e.printStackTrace();
