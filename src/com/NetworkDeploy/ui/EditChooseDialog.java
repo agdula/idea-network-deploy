@@ -25,7 +25,7 @@ import java.util.List;
 
 public class EditChooseDialog extends DialogWrapper{
     private String message;
-    private JComboBox destinationEdit;
+    private JComboBox<String> comboBox;
 
     protected EditChooseDialog(Project project, String message, List<String> items) {
         super(project);
@@ -33,8 +33,8 @@ public class EditChooseDialog extends DialogWrapper{
 
         String[] options = new String[items.size()];
         for (int i=0;i!=items.size();i++) options[i] = items.get(i);
-        destinationEdit = new JComboBox(options);
-        destinationEdit.setEditable(true);
+        comboBox = new JComboBox<String>(options);
+        comboBox.setEditable(true);
 
         super.init();
     }
@@ -44,15 +44,20 @@ public class EditChooseDialog extends DialogWrapper{
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.add(new JLabel(message));
-        panel.add(destinationEdit);
+        panel.add(comboBox);
         return panel;
+    }
+
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+        return comboBox;
     }
 
     public static String showDialog(Project project, String message, List<String> items) {
         EditChooseDialog dialog = new EditChooseDialog(project, message, items);
         dialog.show();
         if (dialog.getExitCode()==0) {
-            return (String) dialog.destinationEdit.getSelectedItem();
+            return (String) dialog.comboBox.getSelectedItem();
         }
         return null;
     }
