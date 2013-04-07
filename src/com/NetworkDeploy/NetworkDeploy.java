@@ -39,8 +39,7 @@ public class NetworkDeploy extends AnAction {
 
     public void actionPerformed(AnActionEvent event) {
         try {
-            ConfigHelper.prepare();
-            if (Config.isUseDestinationHistory()) DestinationHistory.prepare();
+            DestinationHistory.prepare();
             doAction(event);
         } catch (NetworkDeployException e) {
             notify(e);
@@ -103,7 +102,7 @@ public class NetworkDeploy extends AnAction {
                 try {
                     worker.copy(source);
                     NetworkDeploy.notify("File is copied successfully", NotificationType.INFORMATION);
-                    if (Config.isUseDestinationHistory()) history.save();
+                    history.save();
                 } catch (NetworkDeployException e) {
                     NetworkDeploy.notify(e);
                 } catch (Exception e) {

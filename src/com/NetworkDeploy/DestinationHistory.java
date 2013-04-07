@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package com.NetworkDeploy;
 
+import com.NetworkDeploy.config.Config;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.*;
@@ -31,7 +32,8 @@ public class DestinationHistory {
     private static Map<VirtualFile, String> lastChoices = new HashMap<VirtualFile, String>();
 
     public static void prepare() throws NetworkDeployException{
-        historyFolder = new File(Config.getPluginFolder(), "history");
+        if (!Config.getInstance().useDestinationHistory) return;
+        historyFolder = Config.getInstance().historyDir;
 
         if (historyFolder.exists()) {
             if (!historyFolder.isDirectory()) throw new NetworkDeployException("Can't create history directory");
@@ -43,7 +45,7 @@ public class DestinationHistory {
     public DestinationHistory(VirtualFile virtualFile) throws NetworkDeployException {
         this.virtualFile = virtualFile;
         destinations = new ArrayList<String>();
-        if (!Config.isUseDestinationHistory()) return;
+        if (!Config.getInstance().useDestinationHistory) return;
 
         historyFile = new File(historyFolder, virtualFile.getName());
         if (historyFile.exists()) {
@@ -63,7 +65,7 @@ public class DestinationHistory {
     public void save() throws NetworkDeployException {
         if (destinations.indexOf(lastChoices.get(virtualFile))==0) return;
         destinations = newList(destinations, lastChoices.get(virtualFile));
-        if (!Config.isUseDestinationHistory()) return;
+        if (!Config.getInstance().useDestinationHistory) return;
 
         OutputStream os = null;
         try {

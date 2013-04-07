@@ -41,6 +41,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!-- Add your extensions here -->
+      <applicationService serviceInterface="com.NetworkDeploy.config.Config" serviceImplementation="com.NetworkDeploy.config.Config"/>
   </extensions>
 </idea-plugin>
