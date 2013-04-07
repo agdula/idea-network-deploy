@@ -28,24 +28,35 @@ import java.io.File;
     storages = @com.intellij.openapi.components.Storage(id="other", file = StoragePathMacros.APP_CONFIG + "/NetworkDeploy.xml")
 )
 public class Config implements PersistentStateComponent<Config> {
+    public static final String KNOWN_HOSTS_FILENAME = ".ssh/known_hosts";
+    public static final String RSA_IDENTITY_FILENAME = ".ssh/id_rsa";
+
     public boolean useDestinationHistory;
-    private String historyDirName;
+    public String historyDirName;
+
+    public int sftpConnectTimeout;
+    public String knownHostsFilename;
+    public String rsaIdentityFilname;
 
     public Config() {
         useDestinationHistory = true;
         historyDirName = ".network_deploy_history";
+
+        sftpConnectTimeout = 30000;
+        knownHostsFilename = KNOWN_HOSTS_FILENAME;
+        rsaIdentityFilname = RSA_IDENTITY_FILENAME;
     }
 
     @Transient
-    public File userDir;
-    @Transient
-    public File historyDir;
+    private File userDir;
 
     private void init() {
         userDir = new File(System.getProperty("user.home"));
         if (!userDir.exists() || !userDir.isDirectory()) throw new RuntimeException();
+    }
 
-        historyDir = new File(userDir, historyDirName);
+    public File newFile(String filename) {
+        return new File(userDir, filename).getAbsoluteFile();
     }
 
     @Transient

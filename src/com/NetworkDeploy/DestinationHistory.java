@@ -24,6 +24,7 @@ import java.io.*;
 import java.util.*;
 
 public class DestinationHistory {
+    private static Config config;
     private static File historyFolder;
     private File historyFile;
     private VirtualFile virtualFile;
@@ -32,8 +33,9 @@ public class DestinationHistory {
     private static Map<VirtualFile, String> lastChoices = new HashMap<VirtualFile, String>();
 
     public static void prepare() throws NetworkDeployException{
-        if (!Config.getInstance().useDestinationHistory) return;
-        historyFolder = Config.getInstance().historyDir;
+        config = Config.getInstance();
+        if (!config.useDestinationHistory) return;
+        historyFolder = config.newFile(config.historyDirName);
 
         if (historyFolder.exists()) {
             if (!historyFolder.isDirectory()) throw new NetworkDeployException("Can't create history directory");
@@ -45,7 +47,7 @@ public class DestinationHistory {
     public DestinationHistory(VirtualFile virtualFile) throws NetworkDeployException {
         this.virtualFile = virtualFile;
         destinations = new ArrayList<String>();
-        if (!Config.getInstance().useDestinationHistory) return;
+        if (!config.useDestinationHistory) return;
 
         historyFile = new File(historyFolder, virtualFile.getName());
         if (historyFile.exists()) {
@@ -65,7 +67,7 @@ public class DestinationHistory {
     public void save() throws NetworkDeployException {
         if (destinations.indexOf(lastChoices.get(virtualFile))==0) return;
         destinations = newList(destinations, lastChoices.get(virtualFile));
-        if (!Config.getInstance().useDestinationHistory) return;
+        if (!config.useDestinationHistory) return;
 
         OutputStream os = null;
         try {

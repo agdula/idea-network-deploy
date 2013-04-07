@@ -19,6 +19,7 @@ package com.NetworkDeploy.worker;
 
 import com.NetworkDeploy.AbstractCopy;
 import com.NetworkDeploy.NetworkDeployException;
+import com.NetworkDeploy.config.Config;
 import com.NetworkDeploy.ui.SshUserInfo;
 import com.jcraft.jsch.*;
 
@@ -27,14 +28,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class SftpCopy extends AbstractCopy {
-    public static int CONNECT_TIMEOUT = 1000;
-
     private String user;
     private String host;
     private String path;
     private String sourceFilename;
 
     private JSch jsch;
+    private Config config;
 
     public boolean setDestination(String destination, String sourceFilename) {
         this.sourceFilename = sourceFilename;
@@ -61,10 +61,10 @@ public class SftpCopy extends AbstractCopy {
         try {
             session = jsch.getSession(user, host);
             session.setUserInfo(new SshUserInfo(project));
-            session.connect(CONNECT_TIMEOUT);
+            session.connect(config.sftpConnectTimeout);
 
             Channel channel = session.openChannel("sftp");
-            channel.connect(CONNECT_TIMEOUT);
+            channel.connect(config.sftpConnectTimeout);
             sftp = (ChannelSftp) channel;
         } catch (JSchException e) {
             e.printStackTrace();
@@ -96,24 +96,31 @@ public class SftpCopy extends AbstractCopy {
     }
 
     private void prepare() throws NetworkDeployException {
-        File homeFolder = new File(System.getProperty("user.home"));
-        File identityFile = new File(homeFolder, ".ssh/id_rsa");
-        File knownHostsFile = new File(homeFolder, ".ssh/known_hosts");
-
-        if (!identityFile.exists()) throw new NetworkDeployException("Can't find identity file");
-        if (!knownHostsFile.exists()) throw new NetworkDeployException("Can't find known hosts file");
-
+        config = Config.getInstance();
         jsch = new JSch();
-        try {
-            jsch.addIdentity(identityFile.getAbsolutePath());
-        } catch (JSchException e) {
-            throw new NetworkDeployException("Can't add private key", e);
+
+        File identityFile = config.newFile(config.rsaIdentityFilname);
+        if (identityFile.exists()) {
+            try {
+                jsch.addIdentity(identityFile.getAbsolutePath());
+            } catch (JSchException e) {
+                throw new NetworkDeployException("Can't add identity key '" + identityFile.getPath() + "'", e);
+            }
+        } else {
+            if (!config.rsaIdentityFilname.equals(Config.RSA_IDENTITY_FILENAME))
+                throw new NetworkDeployException("Identity key '" + identityFile.getPath() + "' doesn't exist");
         }
 
-        try {
-            jsch.setKnownHosts(knownHostsFile.getAbsolutePath());
-        } catch (JSchException e) {
-            throw new NetworkDeployException("Can't add known hosts file", e);
+        File knownHostsFile = config.newFile(config.knownHostsFilename);
+        if (knownHostsFile.exists()) {
+            try {
+                jsch.setKnownHosts(knownHostsFile.getAbsolutePath());
+            } catch (JSchException e) {
+                throw new NetworkDeployException("Can't set known hosts file '" + knownHostsFile.getPath() + "'", e);
+            }
+        } else {
+            if (!config.knownHostsFilename.equals(Config.KNOWN_HOSTS_FILENAME))
+                throw new NetworkDeployException("knownHosts key '" + knownHostsFile.getPath() + "' doesn't exist");
         }
     }
 }
