@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package com.NetworkDeploy;
 
+import com.NetworkDeploy.history.History;
 import com.NetworkDeploy.ui.EditChooseDialog;
 import com.NetworkDeploy.worker.LocalCopy;
 import com.NetworkDeploy.worker.SftpCopy;
@@ -39,7 +40,6 @@ public class NetworkDeploy extends AnAction {
 
     public void actionPerformed(AnActionEvent event) {
         try {
-            DestinationHistory.prepare();
             doAction(event);
         } catch (NetworkDeployException e) {
             notify(e);
@@ -54,7 +54,7 @@ public class NetworkDeploy extends AnAction {
         VirtualFile file = event.getData(PlatformDataKeys.VIRTUAL_FILE);
         if (file ==null || file.isDirectory()) return;
 
-        DestinationHistory history = new DestinationHistory(file);
+        History history = new History(file);
         Project project = event.getData(PlatformDataKeys.PROJECT);
         List<String> options = history.getDestinations();
         String destination = EditChooseDialog.showDialog(project, "Where to save '"+ file.getName()+"'?", options);
@@ -87,7 +87,7 @@ public class NetworkDeploy extends AnAction {
         notify("'"+destination+"' is not a valid destination", NotificationType.ERROR);
     }
 
-    private void copy(final AbstractCopy worker, VirtualFile file, final DestinationHistory history) throws NetworkDeployException {
+    private void copy(final AbstractCopy worker, VirtualFile file, final History history) throws NetworkDeployException {
         byte[] buffer;
         try {
             buffer = file.contentsToByteArray();

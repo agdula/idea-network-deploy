@@ -15,79 +15,34 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package com.NetworkDeploy;
+package com.NetworkDeploy.history;
 
 import com.NetworkDeploy.config.Config;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.*;
 import java.util.*;
 
-public class DestinationHistory {
-    private static Config config;
-    private static File historyFolder;
-    private File historyFile;
+public class History {
     private VirtualFile virtualFile;
 
     private List<String> destinations;
     private static Map<VirtualFile, String> lastChoices = new HashMap<VirtualFile, String>();
 
-    public static void prepare() throws NetworkDeployException{
-        config = Config.getInstance();
-        if (!config.useDestinationHistory) return;
-        historyFolder = config.newFile(config.historyDirName);
-
-        if (historyFolder.exists()) {
-            if (!historyFolder.isDirectory()) throw new NetworkDeployException("Can't create history directory");
-        } else {
-            if (!historyFolder.mkdir()) throw new NetworkDeployException("Can't create history directory");
-        }
-    }
-
-    public DestinationHistory(VirtualFile virtualFile) throws NetworkDeployException {
+    public History(VirtualFile virtualFile) {
         this.virtualFile = virtualFile;
-        destinations = new ArrayList<String>();
-        if (!config.useDestinationHistory) return;
 
-        historyFile = new File(historyFolder, virtualFile.getName());
-        if (historyFile.exists()) {
-            try {
-                Scanner scanner = new Scanner(historyFile);
-                while (scanner.hasNext()) {
-                    String destination = scanner.next().trim();
-                    destinations.add(destination);
-                }
-                scanner.close();
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+        if (Config.getInstance().useDestinationHistory) {
+            destinations = HistoryService.getInstance().fileHistory.get(virtualFile.getCanonicalPath());
         }
+        if (destinations==null) destinations = new ArrayList<String>();
     }
 
-    public void save() throws NetworkDeployException {
+    public void save()  {
         if (destinations.indexOf(lastChoices.get(virtualFile))==0) return;
         destinations = newList(destinations, lastChoices.get(virtualFile));
-        if (!config.useDestinationHistory) return;
 
-        OutputStream os = null;
-        try {
-            //noinspection ResultOfMethodCallIgnored
-            historyFile.createNewFile();
-            os = new FileOutputStream(historyFile);
-            for (String next : destinations) {
-                os.write((next+"\n").getBytes());
-            }
-            os.close();
-        } catch (FileNotFoundException e) {
-            throw new NetworkDeployException("FileNotFoundException");
-        } catch (IOException e) {
-            e.printStackTrace();
-            try {
-                if (os!=null) os.close();
-            } catch (IOException exp) {
-                e.printStackTrace();
-            }
-            throw new NetworkDeployException("Can't save history");
+        if (Config.getInstance().useDestinationHistory) {
+            HistoryService.getInstance().fileHistory.put(virtualFile.getCanonicalPath(), destinations);
         }
     }
 
