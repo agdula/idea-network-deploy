@@ -43,5 +43,6 @@
   <extensions defaultExtensionNs="com.intellij">
       <applicationService serviceInterface="com.NetworkDeploy.config.Config" serviceImplementation="com.NetworkDeploy.config.Config"/>
       <applicationService serviceInterface="com.NetworkDeploy.history.HistoryService" serviceImplementation="com.NetworkDeploy.history.HistoryService"/>
+      <applicationConfigurable instance="com.NetworkDeploy.config.ConfigScreen"/>
   </extensions>
 </idea-plugin>

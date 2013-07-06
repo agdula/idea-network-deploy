@@ -32,7 +32,6 @@ public class Config implements PersistentStateComponent<Config> {
     public static final String RSA_IDENTITY_FILENAME = ".ssh/id_rsa";
 
     public boolean useDestinationHistory;
-    public String historyDirName;
 
     public int sftpConnectTimeout;
     public String knownHostsFilename;
@@ -40,7 +39,6 @@ public class Config implements PersistentStateComponent<Config> {
 
     public Config() {
         useDestinationHistory = true;
-        historyDirName = ".network_deploy_history";
 
         sftpConnectTimeout = 30000;
         knownHostsFilename = KNOWN_HOSTS_FILENAME;
