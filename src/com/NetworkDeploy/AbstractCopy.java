@@ -28,5 +28,9 @@ public abstract class AbstractCopy {
 
     public abstract boolean setDestination(String destination, String sourceFilename);
 
+    public abstract String getDestination();
+
+    public abstract boolean isDirectory();
+
     public abstract void copy(byte[] source) throws NetworkDeployException;
 }

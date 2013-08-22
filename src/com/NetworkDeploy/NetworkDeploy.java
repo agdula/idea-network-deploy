@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package com.NetworkDeploy;
 
-import com.NetworkDeploy.history.History;
+import com.NetworkDeploy.history.Prompter;
 import com.NetworkDeploy.ui.EditChooseDialog;
 import com.NetworkDeploy.worker.LocalCopy;
 import com.NetworkDeploy.worker.SftpCopy;
@@ -54,13 +54,13 @@ public class NetworkDeploy extends AnAction {
         VirtualFile file = event.getData(PlatformDataKeys.VIRTUAL_FILE);
         if (file ==null || file.isDirectory()) return;
 
-        History history = new History(file);
+        Prompter prompter = Prompter.getInstance(file);
         Project project = event.getData(PlatformDataKeys.PROJECT);
-        List<String> options = history.getDestinations();
+        List<String> options = prompter.getOptions();
         String destination = EditChooseDialog.showDialog(project, "Where to save '"+ file.getName()+"'?", options);
         if (destination==null) return;
         destination = destination.trim();
-        history.addUserChoice(destination);
+        prompter.setLastChoice(destination);
 
         if (destination.length()!=0) {
             for (Class workerClass : workers) {
@@ -79,7 +79,7 @@ public class NetworkDeploy extends AnAction {
                     FileDocumentManager.getInstance().saveDocument(document);
 
                     worker.setProject(project);
-                    copy(worker, file, history);
+                    copy(worker, file, prompter);
                     return;
                 }
             }
@@ -87,7 +87,7 @@ public class NetworkDeploy extends AnAction {
         notify("'"+destination+"' is not a valid destination", NotificationType.ERROR);
     }
 
-    private void copy(final AbstractCopy worker, VirtualFile file, final History history) throws NetworkDeployException {
+    private void copy(final AbstractCopy worker, VirtualFile file, final Prompter prompter) throws NetworkDeployException {
         byte[] buffer;
         try {
             buffer = file.contentsToByteArray();
@@ -102,7 +102,7 @@ public class NetworkDeploy extends AnAction {
                 try {
                     worker.copy(source);
                     NetworkDeploy.notify("File is copied successfully", NotificationType.INFORMATION);
-                    history.save();
+                    prompter.save(worker.getDestination(), worker.isDirectory());
                 } catch (NetworkDeployException e) {
                     NetworkDeploy.notify(e);
                 } catch (Exception e) {

@@ -28,6 +28,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class SftpCopy extends AbstractCopy {
+    private String destination;
+    private boolean directory = false;
+
     private String user;
     private String host;
     private String path;
@@ -37,6 +40,7 @@ public class SftpCopy extends AbstractCopy {
     private Config config;
 
     public boolean setDestination(String destination, String sourceFilename) {
+        this.destination = destination;
         this.sourceFilename = sourceFilename;
 
         int index = destination.indexOf(':');
@@ -48,7 +52,10 @@ public class SftpCopy extends AbstractCopy {
         if (index<0) return false;
         user = rest.substring(0, index);
         host = rest.substring(index+1);
-        if (path.isEmpty() || path.endsWith("/")) path += sourceFilename;
+        if (path.isEmpty() || path.endsWith("/")) {
+            directory = true;
+            path += sourceFilename;
+        }
 
         return true;
     }
@@ -77,6 +84,10 @@ public class SftpCopy extends AbstractCopy {
                 os = sftp.put(path);
             } catch (SftpException e) {
                 if (e.getMessage().endsWith("is a directory")) {
+                    directory = true;
+                    if (!destination.endsWith("/")) {
+                        destination += "/";
+                    }
                     path = path + "/" + sourceFilename;
                     os = sftp.put(path);
                 } else throw e;
@@ -122,5 +133,13 @@ public class SftpCopy extends AbstractCopy {
             if (!config.knownHostsFilename.equals(Config.KNOWN_HOSTS_FILENAME))
                 throw new NetworkDeployException("knownHosts key '" + knownHostsFile.getPath() + "' doesn't exist");
         }
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public boolean isDirectory() {
+        return directory;
     }
 }

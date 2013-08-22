@@ -21,6 +21,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 
@@ -37,6 +38,14 @@ public class HistoryService implements PersistentStateComponent<HistoryService> 
 
     public HistoryService() {
         fileHistory = new TreeMap<String, List<String>>();
+    }
+
+    public static List<String> get(VirtualFile file) {
+        return getInstance().fileHistory.get(file.getCanonicalPath());
+    }
+
+    public static void put(VirtualFile file, List<String> value) {
+        getInstance().fileHistory.put(file.getCanonicalPath(), value);
     }
 
     @Transient

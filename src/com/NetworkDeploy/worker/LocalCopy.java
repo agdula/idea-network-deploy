@@ -24,20 +24,29 @@ import java.io.*;
 
 public class LocalCopy extends AbstractCopy {
     private File file;
+    private String destination;
+    private boolean directory = false;
 
     public boolean setDestination(String destination, String sourceFilename) {
-        File dest = new File(destination);
+        this.destination = destination;
+        file = new File(destination);
 
         try {
             //noinspection ResultOfMethodCallIgnored
-            dest.getCanonicalPath();
+            file.getCanonicalPath();
         } catch (IOException e) {
             return false;
         }
 
-        if (!dest.isAbsolute()) return false;
+        if (!file.isAbsolute()) return false;
 
-        file = dest.isDirectory() ? new File(dest, sourceFilename) : dest;
+        if (file.isDirectory()) {
+            directory = true;
+            if (!this.destination.endsWith("/")) {
+                this.destination += "/";
+            }
+            file = new File(file, sourceFilename);
+        }
         return true;
     }
 
@@ -77,5 +86,13 @@ public class LocalCopy extends AbstractCopy {
             }
             throw new NetworkDeployException("Error occurred while writing to file", e);
         }
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public boolean isDirectory() {
+        return directory;
     }
 }
