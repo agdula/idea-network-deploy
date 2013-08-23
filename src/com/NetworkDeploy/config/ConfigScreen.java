@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package com.NetworkDeploy.config;
 
+import com.NetworkDeploy.history.HistoryService;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.Nls;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -77,6 +79,17 @@ public class ConfigScreen implements Configurable {
 
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.add(useDestinationHistoryBox);
+        JButton cleanHistoryBtn = new JButton();
+        cleanHistoryBtn.setAction(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                HistoryService.getInstance().fileHistory.clear();
+                setEnabled(!HistoryService.getInstance().fileHistory.isEmpty());
+            }
+        });
+        cleanHistoryBtn.setText("Clear History");
+        cleanHistoryBtn.setEnabled(!HistoryService.getInstance().fileHistory.isEmpty());
+        panel.add(cleanHistoryBtn);
         main.add(panel);
 
         panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
